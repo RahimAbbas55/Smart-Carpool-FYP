@@ -35,7 +35,6 @@ const SignUpScreen = ({ navigation }) => {
       Alert.alert('Validation Error', 'Password must be greater than 8 characters');
       return;
     }
-
     try {
       const serverURL = Platform.OS === 'android' ? 'http://10.0.2.2:50/api/passenger/signup' : 'http://localhost:50/api/passenger/signup';
       const response = await fetch( serverURL, {
@@ -83,7 +82,7 @@ const SignUpScreen = ({ navigation }) => {
 
       <Button text="Sign Up" onPress={handleSignUp} />
 
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+      <TouchableOpacity onPress={() => navigation.goBack('Login')}>
         <Text style={styles.loginText}>Already have an account? Log in</Text>
       </TouchableOpacity>
     </View>

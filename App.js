@@ -2,10 +2,10 @@ import { StatusBar } from "expo-status-bar";
 import { createStackNavigator } from "@react-navigation/stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { globalColors } from "./constants/colors";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
+import {ActivityIndicator } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 // Passenger Screens
 import CarpoolRideScreen from "./screens/passenger-screens/carpoolride";
 import ChangePasswordScreen from "./screens/passenger-screens/changepassword";
@@ -24,7 +24,6 @@ import SettingsScreen from "./screens/passenger-screens/settings";
 import SignUpScreen from "./screens/passenger-screens/signup";
 import SingleRideScreen from "./screens/passenger-screens/singleride";
 import WalletScreen from "./screens/passenger-screens/wallet";
-
 // Driver Screens
 import RideRequests from "./screens/driver-screens/RideRequests";
 import RidePage from "./screens/driver-screens/RidePage";
@@ -93,20 +92,59 @@ function DriverDrawer() {
     </Drawer.Navigator>
   );
 }
+
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [sessionToken, setSessionToken] = useState(null);
+  const [isLoading , setisLoading] = useState(false);
+
+  async function fetchToken() {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      if (token) {
+        setisLoading(true);
+        setSessionToken(token);
+        console.log("session token found");
+      } else {
+        console.log("No Session Token found!");
+      }
+    } catch (error) {
+      console.log("Error fetching token:", error);
+    } finally{
+      setisLoading(false)
+    }
+  }
+  useEffect(() => {
+    fetchToken();
+  }, []);
+
+  if ( isLoading ){
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
   return (
     <>
       <StatusBar style="auto" />
       <NavigationContainer>
-        <Stack.Navigator>
+        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={sessionToken ? "Home" : "Login"}>
+          {!sessionToken && (
             <>
-            {/* Passenger Screens */}
+              <Stack.Screen name="Login" component={LoginScreen} options={{
+                gestureEnabled: false,
+              }}/>
+              <Stack.Screen name="SignUp" component={SignUpScreen} />
+              <Stack.Screen name="ForgetPassword" component={ForgotPasswordScreen}/>
+            </>
+          )}
+          <>
               <Stack.Screen
                 name="Home"
                 component={RequestRideScreen}
                 options={{
                   headerShown: false,
+                  gestureEnabled: false
                 }}
               />
               <Stack.Screen
@@ -114,6 +152,7 @@ export default function App() {
                 component={MenuScreen}
                 options={{
                   headerShown: false,
+                  gestureEnabled: false
                 }}
               />
               <Stack.Screen
@@ -208,8 +247,6 @@ export default function App() {
                   headerShown: false,
                 }}
               />
-
-
               {/* Driver Screens */}
               <Stack.Screen
                 name="Driver"
@@ -337,322 +374,9 @@ export default function App() {
                   headerShown: false,
                 }}
               />
-              <Stack.Screen
-                name="Login"
-                component={LoginScreen}
-                options={{
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="SignUp"
-                component={SignUpScreen}
-                options={{
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="ForgetPassword"
-                component={ForgotPasswordScreen}
-                options={{
-                  headerShown: false,
-                }}
-              />
             </>
         </Stack.Navigator>
       </NavigationContainer>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  drawerStyles: {
-    backgroundColor: globalColors.violetBlue,
-    width: 250,
-  },
-  drawerItemStyle: {
-    marginVertical: 5,
-    borderRadius: 5,
-  },
-  drawerLabelStyle: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});
-
-// export default function App() {
-//   const [loggedIn, setLoggedIn] = useState(false);
-//   return (
-//     <>
-//       <StatusBar style="auto" />
-//       <NavigationContainer>
-//         <Stack.Navigator>
-//           {loggedIn ? (
-//             <>
-//             {/* Passenger Screens */}
-//               <Stack.Screen
-//                 name="Home"
-//                 component={RequestRideScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="Menu"
-//                 component={MenuScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="CarpoolRide"
-//                 component={CarpoolRideScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="SingleRide"
-//                 component={SingleRideScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="ChooseDriver"
-//                 component={ChooseDriverScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="ContactUs"
-//                 component={ContactUsScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="History"
-//                 component={HistoryScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="OngoingRide"
-//                 component={OngoingRideScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="Logout"
-//                 component={LoginScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="Settings"
-//                 component={SettingsScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="Review"
-//                 component={ReviewScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="Ratings and Reviews"
-//                 component={RatingsAndReviewsScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="ChangePassword"
-//                 component={ChangePasswordScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               {/* <Stack.Screen name="Verify" component={VerifyScreen} /> */}
-//               <Stack.Screen
-//                 name="Packages"
-//                 component={PackagesScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="Wallet"
-//                 component={WalletScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-
-
-//               {/* Driver Screens */}
-//               <Stack.Screen
-//                 name="Driver"
-//                 component={DriverRegisteration}
-//                 options={{
-//                   title: "Driver Registeration",
-//                   headerStyle: {
-//                     backgroundColor: globalColors.violetBlue,
-//                   },
-//                   headerTintColor: "white",
-//                   headerTitleStyle: {
-//                     fontWeight: "bold",
-//                     textAlign: "center",
-//                   },
-//                   headerBackTitle: "",
-//                   headerLeft: null,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="details"
-//                 component={RegisterationDetails}
-//                 options={{
-//                   title: "Driver Details",
-//                   headerStyle: {
-//                     backgroundColor: globalColors.violetBlue,
-//                   },
-//                   headerTintColor: "white",
-//                   headerTitleStyle: {
-//                     fontWeight: "bold",
-//                     textAlign: "center",
-//                   },
-//                   headerBackTitle: "",
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="basicInfo"
-//                 component={BasicInfo}
-//                 options={{
-//                   title: "Basic Info",
-//                   headerStyle: {
-//                     backgroundColor: globalColors.violetBlue,
-//                   },
-//                   headerTintColor: "white",
-//                   headerTitleStyle: {
-//                     fontWeight: "bold",
-//                     textAlign: "center",
-//                   },
-//                   headerBackTitle: "",
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="cnic"
-//                 component={CNICDetail}
-//                 options={{
-//                   title: "CNIC Info",
-//                   headerStyle: {
-//                     backgroundColor: globalColors.violetBlue,
-//                   },
-//                   headerTintColor: "white",
-//                   headerTitleStyle: {
-//                     fontWeight: "bold",
-//                     textAlign: "center",
-//                   },
-//                   headerBackTitle: "",
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="driverId"
-//                 component={DriverIdScreen}
-//                 options={{
-//                   title: "Driver Photo With ID",
-//                   headerStyle: {
-//                     backgroundColor: globalColors.violetBlue,
-//                   },
-//                   headerTintColor: "white",
-//                   headerTitleStyle: {
-//                     fontWeight: "bold",
-//                     textAlign: "center",
-//                   },
-//                   headerBackTitle: "",
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="vehicleInfo"
-//                 component={VehicleInfo}
-//                 options={{
-//                   title: "Vehicle Info",
-//                   headerStyle: {
-//                     backgroundColor: globalColors.violetBlue,
-//                   },
-//                   headerTintColor: "white",
-//                   headerTitleStyle: {
-//                     fontWeight: "bold",
-//                     textAlign: "center",
-//                   },
-//                   headerBackTitle: "",
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="thankyou"
-//                 component={ThankYouPage}
-//                 options={{
-//                   headerShown: false,
-//                   headerLeft: null,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="drawer"
-//                 component={DriverDrawer}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="requests"
-//                 component={RideRequests}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="ridedetails"
-//                 component={RideDetails}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//             </>
-//           ) : (
-//             <>
-//               <Stack.Screen
-//                 name="Login"
-//                 component={LoginScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="SignUp"
-//                 component={SignUpScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//               <Stack.Screen
-//                 name="ForgetPassword"
-//                 component={ForgotPasswordScreen}
-//                 options={{
-//                   headerShown: false,
-//                 }}
-//               />
-//             </>
-//           )}
-//         </Stack.Navigator>
-//       </NavigationContainer>
-//     </>
-//   );
-// }

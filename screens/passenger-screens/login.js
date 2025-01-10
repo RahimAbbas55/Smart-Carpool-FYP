@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Alert, StyleSheet, Text, View , Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button from '../../components/Button';
 import InputField from '../../components/InputField';
 import LinkButton from '../../components/LinkButton';
@@ -23,12 +24,12 @@ const LoginScreen = ({ navigation }) => {
         },
         body: JSON.stringify({ email, password }),
       });
-      console.log(response)
       const data = await response.json();
-
-      if (response.ok) {
+      console.log(data)
+      if (data.status === 'ok') {
+        await AsyncStorage.setItem('authToken', data.token); 
         Alert.alert('Success', 'Login successful!');
-        navigation.navigate('Home');
+        navigation.replace('Home');
       } else {
         Alert.alert('Error', data.message || 'Login failed.');
       }
@@ -37,11 +38,6 @@ const LoginScreen = ({ navigation }) => {
       Alert.alert('Error', 'An error occurred while logging in.');
     }
   };
-  /*
-  const handleLogin = async () => {
-    navigation.navigate('Home')
-  }
-  */
   return (
     <View style={styles.container}>
       <Logo source={require('../../assets/logo.jpeg')} />

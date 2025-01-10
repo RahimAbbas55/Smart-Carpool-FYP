@@ -1,9 +1,13 @@
 const express = require('express');
-const router = express.Router();
 const Passenger = require('../models/Passenger');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+const router = express.Router();
+const dotenv = require('dotenv');
+dotenv.config();
+const jwt_token_secret = process.env.JWT_SECRET;
 
 // Simple test route
 router.get('/', (req, res) => {
@@ -37,21 +41,28 @@ router.post('/signup', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-
   try {
     const user = await Passenger.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    res.status(200).json({ message: 'Login successful', user: { id: user._id, name: user.name } });
+    // Create JWT token
+    const token = jwt.sign({ email: user.email }, jwt_token_secret, { expiresIn: '1h' });
+
+    // Return success response with the token
+    return res.status(201).json({
+      status: 'ok',
+      token: token,
+    });
   } catch (error) {
     console.error('Error during login:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -122,5 +133,19 @@ router.post('/changepassword', async (req, res) => {
     res.status(500).json({ message: 'Server error.' });
   }
 });
+
+//fetching user data after their authentication
+router.post('/userData' , async (req , res) => {
+  const { token } = req.body;
+  try{
+    const user = jwt.verify(token , jwt_token_secret);
+    const userEmail = user.email;
+    await Passenger.findOne({ email : userEmail }).then((data) => {
+      return res.send({ status: 'ok' , data : data });
+    });
+  } catch (error){
+    return res.send({ error: error.message}); 
+  }
+})
 
 module.exports = router;

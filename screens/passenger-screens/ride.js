@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import * as Location from 'expo-location'; // Added import
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View , Dimensions, Platform} from 'react-native';
+import { getUserData } from '../../data-service/auth';
+import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 import Button from '../../components/Button';
 import InputField from '../../components/InputField';
@@ -16,7 +17,7 @@ const RequestRideScreen = ({ navigation }) => {
   const [dropoff, setDropoff] = useState('');
   const [fare, setFare] = useState('');
   const [destination, setDestination] = useState(null);
-
+  const [userData, setUserData] = useState(null);
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -33,6 +34,20 @@ const RequestRideScreen = ({ navigation }) => {
       });
     })();
   }, []);
+
+  // useEffect to fetch user's data after logging in
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const data = await getUserData();
+        setUserData(data); 
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        Alert.alert('Error', 'Failed to fetch user data. Please try again.');
+      }
+    };
+    fetchUserData();
+  } , [])
 
   const handleNextPress = () => {
     if (!pickup || !dropoff || !fare || !selectedRideOption || !currentLocation) {
@@ -59,7 +74,7 @@ const RequestRideScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        onPress={() => navigation.navigate('Menu')}
+        onPress={() => navigation.navigate('Menu' , {userData})}
         style={styles.menuIcon}
       >
         <MaterialIcons name="menu" size={30} color="black" />

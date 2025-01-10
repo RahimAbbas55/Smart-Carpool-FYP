@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ContactUsScreen from './contact';
 import HistoryScreen from './history';
 import LoginScreen from './login';
@@ -13,23 +14,37 @@ import WalletScreen from './wallet';
 
 const pages = [
   { name: 'Home', component: RequestRideScreen, icon: 'home' },
-  { name:'Wallet', component:WalletScreen, icon:'wallet'},
-  { name:'Packages', component: PackagesScreen, icon: 'work'},
+  { name: 'Wallet', component: WalletScreen, icon: 'wallet' },
+  { name: 'Packages', component: PackagesScreen, icon: 'work' },
   { name: 'History', component: HistoryScreen, icon: 'history' },
   { name: 'Ratings and Reviews', component: RatingsAndReviewsScreen, icon: 'rate-review' },
   { name: 'ContactUs', component: ContactUsScreen, icon: 'mail' },
   { name: 'Settings', component: SettingsScreen, icon: 'settings' },
-  { name: 'Logout', component: LoginScreen, icon: 'logout' },
   { name: 'Driver', component: LoginScreen, icon: 'person' },
 ];
 
-const MenuScreen = () => {
-  const navigation = useNavigation();
+const MenuScreen = ({ navigation }) => {
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('authToken');
+      Alert.alert('Success', 'You have been logged out.');
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      Alert.alert('Error', 'An error occurred while logging out. Please try again.');
+    }
+  };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.item}
-      onPress={() => navigation.navigate(item.name)}
+      onPress={() => {
+        if (item.name === 'Logout') {
+          handleLogout();
+        } else {
+          navigation.navigate(item.name);
+        }
+      }}
     >
       <MaterialIcons name={item.icon} size={24} color="#1E40AF" />
       <Text style={styles.text}>{item.name}</Text>
@@ -50,7 +65,7 @@ const MenuScreen = () => {
       </View>
 
       <FlatList
-        data={pages}
+        data={[...pages, { name: 'Logout', icon: 'logout' }]}
         renderItem={renderItem}
         keyExtractor={(item) => item.name}
         contentContainerStyle={styles.list}
@@ -118,5 +133,4 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
 });
-
 export default MenuScreen;
